@@ -31,6 +31,14 @@ public class UserDocumentServiceImpl implements UserDocumentService {
     private final FileStoreRepository fileStoreRepository;
     private final UserConfiguration userConfiguration;
 
+    /**
+     * Primary constructor injecting repositories and configuration properties.
+     *
+     * @param documentRepository  repository for user document persistence
+     * @param userRepository      repository for user lookups
+     * @param fileStoreRepository repository for file store download URL resolution
+     * @param userConfiguration   application configuration properties
+     */
     @Autowired
     public UserDocumentServiceImpl(UserDocumentRepository documentRepository,
                                   UserRepository userRepository,
@@ -42,6 +50,13 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         this.userConfiguration = userConfiguration;
     }
 
+    /**
+     * Testing constructor without userConfiguration.
+     *
+     * @param documentRepository  repository for user document persistence
+     * @param userRepository      repository for user lookups
+     * @param fileStoreRepository repository for file store download URL resolution
+     */
     public UserDocumentServiceImpl(UserDocumentRepository documentRepository,
                                   UserRepository userRepository,
                                   FileStoreRepository fileStoreRepository) {
@@ -72,8 +87,6 @@ public class UserDocumentServiceImpl implements UserDocumentService {
 
         List<UserDocument> createdList = new ArrayList<>();
         for (UserDocument doc : request.getEffectiveDocuments()) {
-            validateDocumentAttributes(doc);
-
             doc.setUserId(resolvedUserId);
             doc.setUserUuid(resolvedUuid);
             if (StringUtils.isNotBlank(userTenant)) {
@@ -81,6 +94,8 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             } else if (StringUtils.isBlank(doc.getTenantId())) {
                 doc.setTenantId(defaultTenant);
             }
+
+            validateDocumentAttributes(doc);
             doc.setCreatedBy(operatorId);
             doc.setLastModifiedBy(operatorId);
             doc.setDocumentUid(maskSensitiveUid(doc.getDocumentType(), doc.getDocumentUid()));
@@ -126,6 +141,9 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         documentRepository.delete(existingDoc.getId(), operatorId);
 
         // 2. Insert new active document record with updated attributes
+        if (StringUtils.isBlank(doc.getTenantId())) {
+            doc.setTenantId(existingDoc.getTenantId());
+        }
         validateDocumentAttributes(doc);
         doc.setId(UUID.randomUUID().toString());
         doc.setUserId(existingDoc.getUserId());
@@ -137,9 +155,6 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             userUuid = userRepository.getUuidByUserId(existingDoc.getUserId());
         }
         doc.setUserUuid(userUuid);
-        if (StringUtils.isBlank(doc.getTenantId())) {
-            doc.setTenantId(existingDoc.getTenantId());
-        }
         doc.setActive(true);
         doc.setCreatedBy(operatorId);
         doc.setLastModifiedBy(operatorId);
@@ -160,7 +175,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             throw new CustomException(UserConstants.ERROR_INVALID_SEARCH_CRITERIA, UserConstants.MSG_DOCUMENT_SEARCH_CRITERIA_NULL);
         }
 
-        if (StringUtils.isNotBlank(criteria.getUserUuid()) && criteria.getUserId() == null) {
+        if (StringUtils.isNotBlank(criteria.getUserUuid()) && criteria.getUserId() == null && CollectionUtils.isEmpty(criteria.getUserUuids())) {
             Long userId = userRepository.getUserIdByUuid(criteria.getUserUuid());
             if (userId != null) {
                 criteria.setUserId(userId);
@@ -173,6 +188,16 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         List<UserDocument> documents = documentRepository.search(criteria);
         if (CollectionUtils.isEmpty(documents)) {
             return Collections.emptyList();
+        }
+
+        if (Boolean.TRUE.equals(criteria.getActive())) {
+            documents = documents.stream()
+                    .filter(d -> d.getActive() == null || Boolean.TRUE.equals(d.getActive()))
+                    .collect(Collectors.toList());
+        } else if (Boolean.FALSE.equals(criteria.getActive())) {
+            documents = documents.stream()
+                    .filter(d -> Boolean.FALSE.equals(d.getActive()))
+                    .collect(Collectors.toList());
         }
 
         for (UserDocument d : documents) {
@@ -259,7 +284,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             return;
         }
         try {
-            String tenant = StringUtils.isNotBlank(tenantId) ? tenantId : "pb";
+            String tenant = resolveTenant(tenantId);
             Map<String, String> urlMap = fileStoreRepository.getUrlByFileStoreId(tenant, Collections.singletonList(fileStoreId));
             if (urlMap == null || !urlMap.containsKey(fileStoreId) || StringUtils.isBlank(urlMap.get(fileStoreId))) {
                 log.error("[USER-DOC-SERVICE] Invalid filestoreId: {} not found in egov-filestore for tenant: {}", fileStoreId, tenant);
@@ -271,6 +296,17 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             log.warn("[USER-DOC-SERVICE] Could not verify filestoreId {} against egov-filestore ({}: {}). Skipping strict validation in unreachable environment.",
                     fileStoreId, e.getClass().getSimpleName(), e.getMessage());
         }
+    }
+
+    private String resolveTenant(String tenantId) {
+        if (StringUtils.isNotBlank(tenantId)) {
+            return tenantId.contains(".") ? tenantId.split("\\.")[0] : tenantId.trim();
+        }
+        if (userConfiguration != null && StringUtils.isNotBlank(userConfiguration.getStateLevelTenantId())) {
+            return userConfiguration.getStateLevelTenantId().trim();
+        }
+        log.error("[USER-DOC-SERVICE] Tenant ID cannot be determined: state-level tenant ID is not configured");
+        throw new CustomException(UserConstants.ERROR_TENANT_ID_REQUIRED, "Tenant ID cannot be determined: state-level tenant ID is not configured");
     }
 
     /**

@@ -21,6 +21,9 @@ public final class UserConstants {
     // =========================================================================
     // 1. Encryption Keys & Model Types
     // =========================================================================
+    public static final String USER_TYPE_CITIZEN = "CITIZEN";
+    public static final String USER_TYPE_EMPLOYEE = "EMPLOYEE";
+    public static final String USER_TYPE_SYSTEM = "SYSTEM";
     public static final String USER_ENCRYPTION_KEY = "User";
     public static final String USER_ADDRESS_ENCRYPTION_KEY = "Address";
     public static final String USER_DOCUMENT_ENCRYPTION_KEY = "UserDocument";
@@ -73,6 +76,8 @@ public final class UserConstants {
     public static final String ERROR_INVALID_DOCUMENT_REQUEST = "INVALID_DOCUMENT_REQUEST";
     public static final String ERROR_INVALID_DOCUMENTS_REQUEST = "INVALID_DOCUMENTS_REQUEST";
     public static final String ERROR_DOCUMENT_NOT_FOUND = "DOCUMENT_NOT_FOUND";
+    public static final String ERROR_UNAUTHORIZED_ACCESS = "UNAUTHORIZED_ACCESS";
+    public static final String ERROR_AADHAAR_MOBILE_MISMATCH = "AADHAAR_MOBILE_MISMATCH";
     public static final String ERROR_DOCUMENT_ID_REQUIRED = "DOCUMENT_ID_REQUIRED";
     public static final String ERROR_DOCUMENT_TYPE_REQUIRED = "DOCUMENT_TYPE_REQUIRED";
     public static final String ERROR_FILESTORE_ID_REQUIRED = "FILESTORE_ID_REQUIRED";
@@ -97,6 +102,12 @@ public final class UserConstants {
     public static final String ERROR_ALTERNATE_MOBILE_SAME_AS_PRIMARY = "ALTERNATE_MOBILE_SAME_AS_PRIMARY";
     public static final String ERROR_GUARDIAN_MANDATORY_FOR_MINOR = "GUARDIAN_MANDATORY_FOR_MINOR";
     public static final String ERROR_INVALID_ADDRESS_TYPE = "INVALID_ADDRESS_TYPE";
+    public static final String ERROR_FIXED_OTP_NOT_CONFIGURED = "FIXED_OTP_NOT_CONFIGURED";
+    public static final String ERROR_ACCOUNT_INACTIVE = "ACCOUNT_INACTIVE";
+    public static final String ERROR_UNAUTHORIZED_CITIZEN_SEARCH = "UNAUTHORIZED_CITIZEN_SEARCH";
+    public static final String ERROR_UNVERIFIED_CITIZEN_EXISTS = "UNVERIFIED_CITIZEN_EXISTS";
+    public static final String ERROR_EMPLOYEE_ALREADY_EXISTS_WITH_MOBILE = "EMPLOYEE_ALREADY_EXISTS_WITH_MOBILE";
+    public static final String MSG_EMPLOYEE_ALREADY_EXISTS_WITH_MOBILE = "An employee account already exists with this mobile number in the system.";
 
     // =========================================================================
     // 3a. Localization Keys (UG_ standard)
@@ -240,9 +251,14 @@ public final class UserConstants {
     public static final String MSG_UNAUTHORIZED_RESYNC = "Unauthorized re-sync request: Authenticated user does not match target citizen profile.";
     public static final String MSG_FILESTORE_NOT_FOUND = "The provided filestoreId does not exist or is inaccessible in filestore service: ";
     public static final String MSG_AADHAAR_ALREADY_LINKED = "This Aadhaar number is already linked to another citizen profile. An Aadhaar card cannot be shared across multiple citizen identities.";
+    public static final String MSG_UNVERIFIED_CITIZEN_EXISTS = "Only one citizen profile with unverified identity is allowed per mobile number. All other citizens under this mobile number must be identity verified.";
     public static final String MSG_INVALID_ALTERNATE_MOBILE = "Alternate mobile number must be a valid 10-digit Indian phone number starting with 6-9.";
     public static final String MSG_ALTERNATE_MOBILE_SAME_AS_PRIMARY = "Alternate mobile number cannot be the same as primary mobile number.";
     public static final String MSG_GUARDIAN_MANDATORY_FOR_MINOR = "Guardian Name and Guardian Relation are mandatory for minor citizens under 18 years of age.";
+    public static final String MSG_FIXED_OTP_NOT_CONFIGURED = "Citizen login fixed OTP value is not configured";
+    public static final String MSG_ACCOUNT_INACTIVE = "Citizen account is inactive. Please contact support.";
+    public static final String MSG_UNAUTHORIZED_CITIZEN_SEARCH = "Access denied: Citizens are only permitted to search for their own profile. UUID or mobile number must match the authenticated user.";
+    public static final String MSG_AADHAAR_MOBILE_MISMATCH = "Mobile number registered with Aadhaar does not match your logged-in mobile number.";
 
     // =========================================================================
     // 5. API Identifiers & Response Message Constants
@@ -282,4 +298,36 @@ public final class UserConstants {
     public static final String JSON_KEY_GENDER = "gender";
     public static final String JSON_KEY_DOB = "dob";
     public static final String JSON_KEY_PHOTO = "photo";
+    public static final String JSON_KEY_MASKED_AADHAAR = "maskedAadhaar";
+    public static final String JSON_KEY_MOBILE = "mobile";
+    public static final String JSON_KEY_MOBILE_NUMBER = "mobileNumber";
+    public static final String JSON_KEY_PHONE = "phone";
+
+    // =========================================================================
+    // 8. Identity Verification Sources & Multi-Auth Constants
+    // =========================================================================
+    public static final String IDENTITY_SOURCE_AADHAAR = "AADHAAR";
+    public static final String IDENTITY_SOURCE_DIGILOCKER = "DIGILOCKER";
+    public static final String IDENTITY_SOURCE_FAMILY_ID = "FAMILY_ID";
+    public static final String IDENTITY_SOURCE_SYSTEM = "SYSTEM";
+    public static final String AADHAAR_USERNAME_PREFIX = "AADHAAR_";
+    public static final String DEFAULT_AADHAAR_CITIZEN_NAME = "Aadhaar Verified Citizen";
+    public static final String DEFAULT_REQUESTER_AADHAAR_VERIFY_ENDPOINT = "requester-services-dx/aadhaar/v1/_verifyOtp";
+
+    // =========================================================================
+    // 9. Family Service Integration Constants
+    // =========================================================================
+    public static final String FAMILY_PARAM_STATUS = "status";
+    public static final String FAMILY_STATUS_ACTIVE = "ACTIVE";
+    public static final String FIELD_FAMILY_ID = "familyId";
+    public static final String FIELD_FAMILY_STATUS = "status";
+    public static final String DEFAULT_FAMILY_SEARCH_ENDPOINT = "family/v1/family/_search";
+    public static final String FAMILY_PARAM_MEMBER_USER_UUID = "memberUserUuid";
+    public static final String FAMILY_PARAM_MEMBER_USER_UUIDS = "memberUserUuids";
+    public static final String PARAM_TENANT_ID = "tenantId";
+    public static final String JSON_KEY_FAMILIES_UPPER = "Families";
+    public static final String JSON_KEY_FAMILIES_LOWER = "families";
+    public static final String JSON_KEY_MEMBERS = "members";
+    public static final String JSON_KEY_ACTIVE = "active";
+    public static final String JSON_KEY_USER_UUID = "userUuid";
 }
